@@ -61,5 +61,4 @@ class Calculator:
 
         b = values.pop()
         a = values.pop()
-        values.append(self.operators[operator](a, b))# calculator/pkg/calculator.py
-
+        values.append(self.operators[operator](a, b))

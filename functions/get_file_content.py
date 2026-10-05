@@ -6,7 +6,7 @@ import sys
 schema_get_file_content = {
     "type": "function",
     "function": {
-        "name": "get_files_content",
+        "name": "get_file_content",
         "description": "gets the content inside of files",
         "parameters": {
             "type": "object",

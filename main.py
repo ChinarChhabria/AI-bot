@@ -2,8 +2,9 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
+import sys
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions,call_function
 import json
 
 load_dotenv()
@@ -28,25 +29,29 @@ messages = [
 ]
 
 
-response = client.chat.completions.create(
-    model="openrouter/free",
-    messages=messages,
-    tools=available_functions,
-)
+for _ in range(20):
+    response = client.chat.completions.create(
+        model="openrouter/free",
+        messages=messages,
+        tools=available_functions,
+        temperature=0,
+    )
 
-message = response.choices[0].message
-if message.tool_calls:  
-    for tool_call in message.tool_calls:
-        function_args = json.loads(tool_call.function.arguments or "{}")
-        print(f"Calling function: {tool_call.function.name}({function_args})")
-else:
-    if args.verbose:
-        answer = response.choices[0].message.content
-        print(answer)
-        if not response.usage:
-            raise RuntimeError("usage not found!")
-        print(f"User prompt: {args.user_prompt}")
-        print("Prompt tokens:",response.usage.prompt_tokens)
-        print("Response tokens:",response.usage.completion_tokens)
+    message = response.choices[0].message
+    messages.append(message)
+    if message.tool_calls:  
+        for tool_call in message.tool_calls:
+            function_args = json.loads(tool_call.function.arguments or "{}")
+            result_message = call_function(tool_call)
+            messages.append(result_message)
+            if not result_message['content']:
+                raise Exception("Empty stuff!")
+            else:
+                if args.verbose:
+                    print(f"-> {result_message['content']}")
     else:
-        print(response.choices[0].message.content)
+        print(message.content)
+        break
+else:
+    print("Maximum no of iterations reached!!")
+    sys.exit(1)
